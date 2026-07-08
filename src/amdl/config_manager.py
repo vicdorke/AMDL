@@ -10,6 +10,7 @@ CONFIG_PATH = CONFIG_DIR / "config.json"
 DEFAULT_CONFIG: dict = {
     "cookies_path": "",
     "download_lyrics": True,
+    "folder_style": "artist_album",
     "output_path": str(Path.home() / "Music" / "Apple Music"),
     "temp_path": str(Path.home() / ".amdl" / "temp"),
     "codec_song": "aac-web",

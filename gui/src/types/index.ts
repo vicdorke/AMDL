@@ -22,6 +22,7 @@ export interface Config {
   temp_path: string;
   cookies_path?: string;
   download_lyrics?: boolean;
+  folder_style?: string;
   codec_song: string;
   codec_music_video: string;
   cover_format: string;

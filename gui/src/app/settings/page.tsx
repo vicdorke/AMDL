@@ -169,6 +169,19 @@ export default function SettingsPage() {
           </div>
 
           <div>
+            <label className="text-xs text-zinc-400 block mb-1">文件夹结构</label>
+            <select
+              className="w-full"
+              value={config.folder_style || 'artist_album'}
+              onChange={(e) => updateField('folder_style' as keyof Config, e.target.value)}
+            >
+              <option value="artist_album">歌手/专辑/歌曲</option>
+              <option value="album_artist">专辑/歌手/歌曲</option>
+              <option value="none">无文件夹（仅文件名）</option>
+            </select>
+          </div>
+
+          <div>
             <label className="text-xs text-zinc-400 block mb-1">临时目录</label>
             <input
               type="text"

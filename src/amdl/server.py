@@ -239,6 +239,8 @@ async def websocket_endpoint(ws: WebSocket, task_id: str):
 async def create_task(req: TaskCreateRequest):
     """创建下载任务并加入队列，自动检测歌单并调整文件夹结构"""
     kwargs = req.model_dump()
+    config = load_config()
+    folder_style = config.get("folder_style", "artist_album")
 
     # 自动检测歌单链接
     is_playlist = any("playlist" in u for u in req.urls)
@@ -247,6 +249,19 @@ async def create_task(req: TaskCreateRequest):
         kwargs["template_file_single_disc"] = "{title}"
         kwargs["template_folder_compilation"] = "{playlist_title}"
         kwargs["template_file_no_album"] = "{artist} - {title}"
+    else:
+        # 应用用户选择的文件夹结构
+        if folder_style == "none":
+            kwargs["template_folder_album"] = "."
+            kwargs["template_file_single_disc"] = "{track:02d} {title}"
+            kwargs["template_folder_compilation"] = "."
+            kwargs["template_folder_no_album"] = "."
+            kwargs["template_file_no_album"] = "{artist} - {title}"
+        elif folder_style == "album_artist":
+            kwargs["template_folder_album"] = "{album}/{album_artist}"
+            kwargs["template_file_single_disc"] = "{track:02d} {title}"
+            kwargs["template_folder_compilation"] = "{album}/{album_artist}"
+        # artist_album is the gamdl default, no override needed
 
     task = task_manager.create_task(**kwargs)
     task_manager.enqueue_task(task.id)
