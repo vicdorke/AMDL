@@ -52,7 +52,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="AMDL API",
     description="Apple Music Downloader API — 支持实时进度推送和多任务队列",
-    version="1.0.1",
+    version="1.0.2",
     docs_url="/docs",
     redoc_url=None,
     lifespan=lifespan,
@@ -178,13 +178,13 @@ class ConfigUpdateRequest(BaseModel):
 
 @app.get("/api/health", tags=["system"])
 async def health_check():
-    return {"status": "ok", "version": "1.0.1"}
+    return {"status": "ok", "version": "1.0.2"}
 
 
 @app.get("/api/info", tags=["system"])
 async def get_api_info():
     return {
-        "api_version": "1.0.1",
+        "api_version": "1.0.2",
         "supported_codecs_song": [{"value": c.value, "label": c.name} for c in SongCodec],
         "supported_codecs_music_video": [{"value": c.value, "label": c.name} for c in MusicVideoCodec],
         "supported_cover_formats": [{"value": c.value, "label": c.name} for c in CoverFormat],

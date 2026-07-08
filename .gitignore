@@ -38,3 +38,6 @@ Thumbs.db
 # 敏感文件
 cookies.txt
 *.cookies.txt
+ffmpeg.exe
+ffmpeg.zip
+AMDL_v1.*.zip
