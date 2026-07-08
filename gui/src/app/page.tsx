@@ -80,6 +80,8 @@ export default function HomePage() {
         save_playlist: latestConfig?.save_playlist ?? true,
         overwrite: latestConfig?.overwrite ?? false,
         no_synced_lyrics: !(latestConfig?.download_lyrics ?? true),
+        audio_format: latestConfig?.audio_format || null,
+        video_format: latestConfig?.video_format || null,
       });
 
       setStatus('success');
