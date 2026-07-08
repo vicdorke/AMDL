@@ -11,7 +11,11 @@
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 
 Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
+!ifdef PRODUCT_OUTFILE
+OutFile "${PRODUCT_OUTFILE}"
+!else
 OutFile "dist\AMDL_Setup_v${PRODUCT_VERSION}.exe"
+!endif
 InstallDir "$PROGRAMFILES\AMDL"
 InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 RequestExecutionLevel admin
@@ -45,7 +49,9 @@ Section "Main" SEC01
   SetOutPath "$INSTDIR"
 
   File "dist\AMDL.exe"
+  !ifndef LITE_VERSION
   File "ffmpeg.exe"
+  !endif
 
   ; Create launcher batch with UTF-8 support
   FileOpen $0 "$INSTDIR\AMDL_Launcher.bat" w
@@ -80,6 +86,9 @@ SectionEnd
 Section Uninstall
   Delete "$INSTDIR\AMDL.exe"
   Delete "$INSTDIR\AMDL_Launcher.bat"
+  !ifndef LITE_VERSION
+  Delete "$INSTDIR\ffmpeg.exe"
+  !endif
   Delete "$INSTDIR\uninst.exe"
   RMDir "$INSTDIR"
 

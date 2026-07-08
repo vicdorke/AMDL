@@ -101,23 +101,9 @@ def build_backend():
 
 
 def make_portable():
-    """创建便携版压缩包"""
+    """创建便携版压缩包（完整版 + 轻量版）"""
     step("4/4 创建便携版压缩包...")
 
-    portable_dir = BUILD / "portable" / APP_NAME
-    portable_dir.mkdir(parents=True, exist_ok=True)
-
-    # 复制 exe
-    exe = DIST / f"{APP_NAME}.exe"
-    if exe.exists():
-        shutil.copy(exe, portable_dir / f"{APP_NAME}.exe")
-
-    # 复制内置 ffmpeg
-    bundled_ffmpeg = ROOT / "ffmpeg.exe"
-    if bundled_ffmpeg.exists():
-        shutil.copy(bundled_ffmpeg, portable_dir / "ffmpeg.exe")
-
-    # 复制启动脚本（设置 PYTHONUTF8=1 修复 Windows GBK 编码问题）
     bat_content = f'''@echo off
 chcp 65001 >nul
 title AMDL - Apple Music Downloader
@@ -130,23 +116,40 @@ echo   首次使用请确保已准备好 cookies.txt
 echo.
 start "" "%~dp0{APP_NAME}.exe"
 '''
-    (portable_dir / "启动.bat").write_text(bat_content, encoding="utf-8")
-    # 同时复制启动脚本到根目录
     (ROOT / "启动.bat").write_text(bat_content, encoding="utf-8")
+    bundled_ffmpeg = ROOT / "ffmpeg.exe"
+    has_ffmpeg = bundled_ffmpeg.exists()
 
-    # 压缩到根目录
-    zip_path = ROOT / f"{APP_NAME}_v{VERSION}_portable.zip"
-    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
-        for f in portable_dir.rglob("*"):
-            arcname = f.relative_to(portable_dir.parent)
-            zf.write(f, arcname)
-    print(f"  便携版 -> {APP_NAME}_v{VERSION}_portable.zip")
+    for flavor, include_ffmpeg in [("full", True), ("lite", False)]:
+        if not include_ffmpeg and not has_ffmpeg:
+            continue
+        if include_ffmpeg and not has_ffmpeg:
+            continue
+
+        portable_dir = BUILD / "portable" / APP_NAME
+        portable_dir.mkdir(parents=True, exist_ok=True)
+
+        exe = DIST / f"{APP_NAME}.exe"
+        if exe.exists():
+            shutil.copy(exe, portable_dir / f"{APP_NAME}.exe")
+        if include_ffmpeg and has_ffmpeg:
+            shutil.copy(bundled_ffmpeg, portable_dir / "ffmpeg.exe")
+        (portable_dir / "启动.bat").write_text(bat_content, encoding="utf-8")
+
+        suffix = "" if include_ffmpeg else "_lite"
+        zip_path = ROOT / f"{APP_NAME}_v{VERSION}_portable{suffix}.zip"
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            for f in portable_dir.rglob("*"):
+                arcname = f.relative_to(portable_dir.parent)
+                zf.write(f, arcname)
+        print(f"  便携版 ({flavor}) -> {APP_NAME}_v{VERSION}_portable{suffix}.zip")
+        shutil.rmtree(portable_dir, ignore_errors=True)
 
     shutil.rmtree(BUILD / "portable", ignore_errors=True)
 
 
 def make_installer():
-    """创建 NSIS 安装程序"""
+    """创建 NSIS 安装程序（完整版 + 轻量版）"""
     step("5/5 创建 NSIS 安装包...")
 
     nsis_paths = [
@@ -158,17 +161,32 @@ def make_installer():
         if Path(p).exists():
             makensis = p
             break
-
     if not makensis:
         makensis = shutil.which("makensis")
-
     if not makensis:
         print("  [跳过] NSIS 未安装，无法创建安装包")
         return
 
-    cmd = [makensis, str(ROOT / "installer.nsi")]
-    run_cmd(cmd, cwd=str(ROOT))
-    print(f"  安装包 -> dist/{APP_NAME}_Setup_v{VERSION}.exe")
+    has_ffmpeg = (ROOT / "ffmpeg.exe").exists()
+
+    for flavor, inc_ffmpeg in [("full", True), ("lite", False)]:
+        if inc_ffmpeg and not has_ffmpeg:
+            continue
+
+        suffix = "" if inc_ffmpeg else "_lite"
+        out_name = f"AMDL_Setup_v{VERSION}{suffix}"
+        defines = [f"!define PRODUCT_OUTFILE \"dist\\{out_name}.exe\""]
+        if not inc_ffmpeg:
+            defines.append("!define LITE_VERSION")
+
+        # 在 ROOT 下生成临时 .nsi（NSIS 相对路径解析需要）
+        nsi_content = (ROOT / "installer.nsi").read_text(encoding="utf-8")
+        tmp_nsi = ROOT / f"installer_{flavor}.nsi"
+        tmp_nsi.write_text("\n".join(defines) + "\n" + nsi_content, encoding="utf-8")
+
+        run_cmd([makensis, str(tmp_nsi)], cwd=str(ROOT))
+        tmp_nsi.unlink()
+        print(f"  安装包 ({flavor}) -> dist/{out_name}.exe")
 
 
 def run_cmd(cmd: list[str], cwd: str | None = None):
