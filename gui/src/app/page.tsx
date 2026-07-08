@@ -191,10 +191,8 @@ export default function HomePage() {
   return (
     <div className="max-w-3xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">下载 Apple Music</h1>
-        <p className="text-zinc-400">
-          支持歌曲、专辑、播放列表、音乐视频 — 粘贴链接即可下载
-        </p>
+        <h1 className="text-3xl font-bold text-white mb-2">{t("download_title")}</h1>
+        <p className="text-zinc-400">{t("download_desc")}</p>
       </div>
 
       {/* URL 输入区 */}
@@ -228,7 +226,7 @@ export default function HomePage() {
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-6">
         <label className="flex items-center gap-2 text-sm font-medium text-zinc-300 mb-3">
           <FileText className="w-4 h-4" />
-          Cookies 文件
+          {t("cookies_label")}
         </label>
         <div className="flex gap-3">
           <input
@@ -289,7 +287,7 @@ export default function HomePage() {
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-6">
         <label className="flex items-center gap-2 text-sm font-medium text-zinc-300 mb-3">
           <Folder className="w-4 h-4" />
-          保存路径
+          {t("output_label")}
         </label>
         <input
           type="text"
@@ -337,7 +335,7 @@ export default function HomePage() {
 
       {/* 支持的链接类型提示 */}
       <div className="mt-8 bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-5">
-        <h3 className="text-sm font-medium text-zinc-400 mb-3">支持的链接类型</h3>
+        <h3 className="text-sm font-medium text-zinc-400 mb-3">{t("supported_links")}</h3>
         <div className="grid grid-cols-2 gap-3">
           {[
             { icon: Music4, label: '歌曲', url: 'music.apple.com/.../song/...' },
