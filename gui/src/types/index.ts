@@ -23,6 +23,7 @@ export interface Config {
   cookies_path?: string;
   download_lyrics?: boolean;
   folder_style?: string;
+  file_name_order?: string[];
   codec_song: string;
   codec_music_video: string;
   cover_format: string;

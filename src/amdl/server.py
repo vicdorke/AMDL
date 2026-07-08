@@ -149,6 +149,7 @@ class ConfigUpdateRequest(BaseModel):
     cookies_path: str | None = None
     download_lyrics: bool | None = None
     folder_style: str | None = None
+    file_name_order: list | None = None
     codec_song: str | None = None
     codec_music_video: str | None = None
     cover_format: str | None = None
@@ -253,11 +254,15 @@ async def create_task(req: TaskCreateRequest):
     else:
         # 应用用户选择的文件夹结构
         if folder_style == "none":
+            # 读取用户自定义的文件名排列顺序并转为模板
+            order = config.get("file_name_order", ["track", "title", "artist"])
+            part_map = {"track": "{track:02d}", "title": "{title}", "artist": "{artist}", "album": "{album}", "sep": " - "}
+            name_template = " ".join(part_map.get(p, "") for p in order).replace("  ", " ").replace(" -  - ", " - ").strip()
             kwargs["template_folder_album"] = ""
-            kwargs["template_file_single_disc"] = "{track:02d} {title}"
+            kwargs["template_file_single_disc"] = name_template
             kwargs["template_folder_compilation"] = ""
             kwargs["template_folder_no_album"] = ""
-            kwargs["template_file_no_album"] = "{artist} - {title}"
+            kwargs["template_file_no_album"] = name_template
         elif folder_style == "album_artist":
             kwargs["template_folder_album"] = "{album}/{album_artist}"
             kwargs["template_file_single_disc"] = "{track:02d} {title}"

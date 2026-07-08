@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Save, RotateCcw, Settings, Trash2, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
+import DragOrder, { defaultOrder } from '@/components/DragOrder';
 import type { Config, ApiInfo } from '@/types';
 
 export default function SettingsPage() {
@@ -180,6 +181,19 @@ export default function SettingsPage() {
               <option value="none">仅单曲</option>
             </select>
           </div>
+
+          {(config.folder_style || 'artist_album') === 'none' && (
+            <div>
+              <label className="text-xs text-zinc-400 block mb-2">
+                文件名排列（拖动方块排序）
+              </label>
+              <DragOrder
+                value={config.file_name_order || defaultOrder}
+                onChange={(order) => updateField('file_name_order' as keyof Config, order as unknown as string)}
+              />
+              <p className="text-xs text-zinc-500 mt-1">拖动调整顺序，实时预览文件名格式</p>
+            </div>
+          )}
 
           <div>
             <label className="text-xs text-zinc-400 block mb-1">临时目录</label>
