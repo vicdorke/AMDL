@@ -57,7 +57,7 @@ export default function HomePage() {
     if (urls.length === 0) return;
     if (!cookiesPath) {
       setStatus('error');
-      setStatusMsg(t('please_select_cookies'));
+      setStatusMsg('请先选择 cookies.txt 文件');
       return;
     }
 
@@ -83,7 +83,7 @@ export default function HomePage() {
       });
 
       setStatus('success');
-      setStatusMsg(t('task_created', res.task_id));
+      setStatusMsg(`任务已创建: ${res.task_id}`);
     } catch (err) {
       setStatus('error');
       setStatusMsg(err instanceof Error ? err.message : '下载请求失败');
@@ -189,19 +189,21 @@ export default function HomePage() {
   return (
     <div className="max-w-3xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">{t('download_title')}</h1>
-        <p className="text-zinc-400">{t('download_desc')}</p>
+        <h1 className="text-3xl font-bold text-white mb-2">下载 Apple Music</h1>
+        <p className="text-zinc-400">
+          支持歌曲、专辑、播放列表、音乐视频 — 粘贴链接即可下载
+        </p>
       </div>
 
       {/* URL 输入区 */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-6">
         <label className="flex items-center gap-2 text-sm font-medium text-zinc-300 mb-3">
           <Link className="w-4 h-4" />
-          Apple Music 链接
+          {t('url_label')}
         </label>
         <textarea
           className="w-full h-32 resize-none"
-          placeholder={`粘贴 Apple Music 链接，每行一个：\nhttps://music.apple.com/cn/album/xxx\nhttps://music.apple.com/cn/playlist/xxx`}
+          placeholder={t('url_placeholder') + '\nhttps://music.apple.com/cn/album/xxx\nhttps://music.apple.com/cn/playlist/xxx'}
           value={urlInput}
           onChange={(e) => setUrlInput(e.target.value)}
         />

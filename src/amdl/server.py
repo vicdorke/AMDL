@@ -475,14 +475,9 @@ async def check_cookies(req: CookiesCheckRequest):
 
     has_sub = api.active_subscription
 
-    # 检测地区/商店
-    storefront = None
+    # 检测地区/商店（gamdl 初始化时已获取，直接从属性读取）
+    storefront = getattr(api, "storefront", None)
     storefront_name = None
-    try:
-        info = await api.get_account_info()
-        storefront = info.get("meta", {}).get("subscription", {}).get("storefront")
-    except Exception:
-        pass
 
     storefront_map = {
         "us": "美国",
