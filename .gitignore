@@ -1,0 +1,40 @@
+# 构建产物
+dist/
+build_output/
+AMDL.exe
+AMDL_v3.0.0_*.zip
+AMDL_Setup_*.exe
+*.spec
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.eggs/
+.mypy_cache/
+
+# Node / Next.js
+gui/node_modules/
+gui/.next/
+gui/out/
+
+# 环境
+.env
+.venv/
+venv/
+
+# 系统
+.DS_Store
+Thumbs.db
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 敏感文件
+cookies.txt
+*.cookies.txt

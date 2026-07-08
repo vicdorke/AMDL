@@ -1,0 +1,10 @@
+gamdl>=3.7
+click
+colorama
+pillow
+fastapi
+uvicorn
+pydantic
+python-multipart
+websockets
+pywebview>=6.0
