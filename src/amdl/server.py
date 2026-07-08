@@ -253,10 +253,10 @@ async def create_task(req: TaskCreateRequest):
     else:
         # 应用用户选择的文件夹结构
         if folder_style == "none":
-            kwargs["template_folder_album"] = "."
+            kwargs["template_folder_album"] = ""
             kwargs["template_file_single_disc"] = "{track:02d} {title}"
-            kwargs["template_folder_compilation"] = "."
-            kwargs["template_folder_no_album"] = "."
+            kwargs["template_folder_compilation"] = ""
+            kwargs["template_folder_no_album"] = ""
             kwargs["template_file_no_album"] = "{artist} - {title}"
         elif folder_style == "album_artist":
             kwargs["template_folder_album"] = "{album}/{album_artist}"
