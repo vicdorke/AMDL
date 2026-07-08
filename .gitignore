@@ -1,10 +1,12 @@
-# 构建产物
+# Build
 dist/
 build_output/
+build/
 AMDL.exe
-AMDL_v3.0.0_*.zip
+AMDL_v*.zip
 AMDL_Setup_*.exe
 *.spec
+*.nsi.tmp
 
 # Python
 __pycache__/
@@ -19,12 +21,12 @@ gui/node_modules/
 gui/.next/
 gui/out/
 
-# 环境
+# Env
 .env
 .venv/
 venv/
 
-# 系统
+# System
 .DS_Store
 Thumbs.db
 *.log
@@ -35,9 +37,15 @@ Thumbs.db
 *.swp
 *.swo
 
-# 敏感文件
+# Sensitive
 cookies.txt
 *.cookies.txt
+
+# Binary deps (local only)
 ffmpeg.exe
 ffmpeg.zip
-AMDL_v1.*.zip
+
+# Old CI / docs
+.github/
+TODO.md
+gui/README.md
