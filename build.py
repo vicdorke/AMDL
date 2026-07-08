@@ -112,6 +112,11 @@ def make_portable():
     if exe.exists():
         shutil.copy(exe, portable_dir / f"{APP_NAME}.exe")
 
+    # 复制内置 ffmpeg
+    bundled_ffmpeg = ROOT / "ffmpeg.exe"
+    if bundled_ffmpeg.exists():
+        shutil.copy(bundled_ffmpeg, portable_dir / "ffmpeg.exe")
+
     # 复制启动脚本（设置 PYTHONUTF8=1 修复 Windows GBK 编码问题）
     bat_content = f'''@echo off
 chcp 65001 >nul

@@ -45,6 +45,7 @@ Section "Main" SEC01
   SetOutPath "$INSTDIR"
 
   File "dist\AMDL.exe"
+  File "ffmpeg.exe"
 
   ; Create launcher batch with UTF-8 support
   FileOpen $0 "$INSTDIR\AMDL_Launcher.bat" w

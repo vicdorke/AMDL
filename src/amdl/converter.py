@@ -26,10 +26,23 @@ def resolve_ffmpeg_executable(
     fallback_paths: list[str] | None = None,
 ) -> str | None:
     candidates: list[str] = []
+
+    # 1. 优先查找应用目录下的 ffmpeg.exe（内置）
+    import sys
+    if getattr(sys, "frozen", False):
+        app_dir = Path(sys.executable).parent
+    else:
+        app_dir = Path(__file__).parent.parent.parent  # project root
+    bundled = app_dir / "ffmpeg.exe"
+    if bundled.exists():
+        candidates.append(str(bundled))
+
+    # 2. 用户指定的路径
     if preferred:
         candidates.append(preferred)
     else:
         candidates.append("ffmpeg")
+
     if fallback_paths:
         candidates.extend(fallback_paths)
 
