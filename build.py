@@ -62,6 +62,7 @@ def build_backend():
         "--console",
         "--clean",
         "--noconfirm",
+        "--icon", str(ROOT / "icon.ico"),
         "--add-data", f"{gui_out}{os.pathsep}gui{os.path.sep}out",
         "--add-data", f"{src_dir}{os.pathsep}amdl",
         "--hidden-import", "amdl",
