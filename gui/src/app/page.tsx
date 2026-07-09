@@ -119,15 +119,18 @@ export default function HomePage() {
     setCheckingCookies(true);
     setCookiesValid('idle');
     try {
-      const res = await api.post<{ valid: boolean; subscription: boolean; message: string; error: string | null }>(
-        '/api/cookies/check', { cookies_path: cookiesPath }
-      );
+      const res = await api.post<{
+        valid: boolean; subscription: boolean; message: string | null; error: string | null;
+        storefront: string | null; storefront_name: string | null; storefront_emoji: string | null;
+      }>('/api/cookies/check', { cookies_path: cookiesPath });
       if (res.valid && res.subscription) {
         setCookiesValid('valid');
-        setCookiesMsg(res.message || t('cookies_valid_sub'));
+        const emoji = res.storefront_emoji ? ` ${res.storefront_emoji}` : '';
+        const region = res.storefront_name ? ` (${res.storefront_name}${emoji})` : '';
+        setCookiesMsg(t('cookies_valid_sub') + region);
       } else if (res.valid) {
         setCookiesValid('valid');
-        setCookiesMsg(res.message || t('cookies_valid_nosub'));
+        setCookiesMsg(t('cookies_valid_nosub'));
       } else {
         setCookiesValid('invalid');
         setCookiesMsg(res.error || t('cookies_invalid'));

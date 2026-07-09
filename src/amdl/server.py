@@ -501,20 +501,21 @@ async def check_cookies(req: CookiesCheckRequest):
     storefront_name = None
 
     storefront_map = {
-        "us": "美国",
-        "cn": "中国",
-        "jp": "日本",
-        "tw": "台湾",
-        "hk": "香港",
-        "gb": "英国",
-        "fr": "法国",
-        "de": "德国",
-        "kr": "韩国",
-        "ca": "加拿大",
-        "au": "澳大利亚",
+        "us": ("美国", "🇺🇸"), "cn": ("中国", "🇨🇳"), "jp": ("日本", "🇯🇵"),
+        "tw": ("台湾", "🇹🇼"), "hk": ("香港", "🇭🇰"), "gb": ("英国", "🇬🇧"),
+        "fr": ("法国", "🇫🇷"), "de": ("德国", "🇩🇪"), "kr": ("韩国", "🇰🇷"),
+        "ca": ("加拿大", "🇨🇦"), "au": ("澳大利亚", "🇦🇺"),
+        "sg": ("新加坡", "🇸🇬"), "in": ("印度", "🇮🇳"), "br": ("巴西", "🇧🇷"),
+        "mx": ("墨西哥", "🇲🇽"), "es": ("西班牙", "🇪🇸"), "it": ("意大利", "🇮🇹"),
+        "nl": ("荷兰", "🇳🇱"), "se": ("瑞典", "🇸🇪"), "no": ("挪威", "🇳🇴"),
+        "dk": ("丹麦", "🇩🇰"), "fi": ("芬兰", "🇫🇮"), "ru": ("俄罗斯", "🇷🇺"),
+        "tr": ("土耳其", "🇹🇷"), "za": ("南非", "🇿🇦"), "nz": ("新西兰", "🇳🇿"),
     }
+    storefront_emoji = None
     if storefront:
-        storefront_name = storefront_map.get(storefront.lower(), storefront.upper())
+        info = storefront_map.get(storefront.lower(), (storefront.upper(), ""))
+        storefront_name = info[0]
+        storefront_emoji = info[1]
 
     return {
         "valid": True,
@@ -522,8 +523,8 @@ async def check_cookies(req: CookiesCheckRequest):
         "subscription": has_sub,
         "storefront": storefront,
         "storefront_name": storefront_name,
-        "message": "cookies 有效" + ("，已订阅 Apple Music" if has_sub else "，但未检测到 Apple Music 订阅")
-                   + (f"（地区: {storefront_name}）" if storefront_name else ""),
+        "storefront_emoji": storefront_emoji,
+        "message": None,  # deprecated, frontend uses structured fields now
     }
 
 
