@@ -45,7 +45,7 @@
 ## 使用
 
 1. 导出浏览器中 Apple Music 的 cookies 为 **Netscape 格式**
-   - Firefox：[Export Cookies]
+   - Firefox：[Get cookies.txt LOCALLY](https://addons.mozilla.org/en-US/firefox/addon/get-cookies-txt-locally)
    - Chrome/Edge：[Get cookies.txt LOCALLY](https://chromewebstore.google.com/detail/cclelndahbckbenkjhflpdbgdldlbecc?utm_source=item-share-cb)
 2. 启动 AMDL，点击「浏览」选择 `cookies.txt`，点击「检测」验证有效性
 3. 粘贴 Apple Music 链接（支持歌曲、专辑、歌单、MV、艺人页面）

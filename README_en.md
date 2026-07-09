@@ -8,7 +8,7 @@ A desktop Apple Music downloader with a beautiful dark-themed Web UI, built on [
 
 Inspired by [wenfeng110402/AppleMusic-Downloader](https://github.com/wenfeng110402/AppleMusic-Downloader).
 
-![Screenshot](Screenshot/1.png)
+![Screenshot](Screenshot/1_EN.png)
 
 > **中文用户请阅读 [中文 README](README.md)。**
 
@@ -45,7 +45,7 @@ Get the latest version from [Releases](https://github.com/DerekH-233/AMDL/releas
 ## Usage
 
 1. Export your Apple Music cookies in **Netscape format**
-   - Firefox: [Export Cookies](https://addons.mozilla.org/firefox/addon/export-cookies-txt/)
+   - Firefox: [Get cookies.txt LOCALLY](https://addons.mozilla.org/en-US/firefox/addon/get-cookies-txt-locally)
    - Chrome/Edge: [Get cookies.txt LOCALLY](https://chromewebstore.google.com/detail/cclelndahbckbenkjhflpdbgdldlbecc?utm_source=item-share-cb)
 2. Launch AMDL, click "Browse" to select `cookies.txt`, click "Check" to verify
 3. Paste Apple Music links (songs, albums, playlists, music videos, artist pages)
