@@ -220,9 +220,16 @@ export default function HomePage() {
       <div className="mt-8 bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-5">
         <h3 className="text-sm font-medium text-zinc-400 mb-3">{t('supported_links')}</h3>
         <div className="grid grid-cols-2 gap-3">
-          {[t('song'), t('album'), t('playlist'), t('music_video')].map((label) => (
-            <div key={label} className="flex items-center gap-2 text-sm text-zinc-500">
-              <Music4 className="w-4 h-4" /><span>{label}</span>
+          {[
+            { label: t('song'), url: 'music.apple.com/.../song/...' },
+            { label: t('album'), url: 'music.apple.com/.../album/...' },
+            { label: t('playlist'), url: 'music.apple.com/.../playlist/...' },
+            { label: t('music_video'), url: 'music.apple.com/.../music-video/...' },
+          ].map((item) => (
+            <div key={item.label} className="flex items-center gap-2 text-sm">
+              <Music4 className="w-4 h-4 text-zinc-500 flex-shrink-0" />
+              <span className="text-zinc-400">{item.label}</span>
+              <span className="text-zinc-600 text-xs truncate">{item.url}</span>
             </div>
           ))}
         </div>
