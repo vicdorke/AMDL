@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Download, Link, FileText, Loader2, CheckCircle2, XCircle, Music4, ShieldCheck, ShieldAlert, Folder, ListMusic } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useI18n } from '@/lib/i18n';
+import DragOrder, { defaultOrder } from '@/components/DragOrder';
 import type { Config } from '@/types';
 
 export default function HomePage() {
@@ -20,12 +21,17 @@ export default function HomePage() {
   const [checkingCookies, setCheckingCookies] = useState(false);
   const [cookiesValid, setCookiesValid] = useState<'idle' | 'valid' | 'invalid'>('idle');
   const [cookiesMsg, setCookiesMsg] = useState('');
+  const [appendYear, setAppendYear] = useState(false);
+  const [folderStyle, setFolderStyle] = useState('artist_album');
+  const [fileNameOrder, setFileNameOrder] = useState(defaultOrder);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     api.get<Config>('/api/config').then((cfg) => {
       setConfig(cfg);
       setOutputPath(localStorage.getItem('amdl_output_path') || cfg.output_path || './Apple Music');
+      setFolderStyle(cfg.folder_style || 'artist_album');
+      setFileNameOrder(cfg.file_name_order || defaultOrder);
       const saved = localStorage.getItem('amdl_cookies_path') || cfg.cookies_path;
       if (saved) setCookiesPath(saved);
     }).catch(() => {});
@@ -66,6 +72,9 @@ export default function HomePage() {
         no_synced_lyrics: !(latestConfig?.download_lyrics ?? true),
         audio_format: latestConfig?.audio_format || null,
         video_format: latestConfig?.video_format || null,
+        append_year: appendYear,
+        folder_style: folderStyle,
+        file_name_order: folderStyle === 'none' ? fileNameOrder : undefined,
       });
       setStatus('success');
       setStatusMsg(t('task_created', res.task_id));
@@ -75,7 +84,7 @@ export default function HomePage() {
     } finally {
       setDownloading(false);
     }
-  }, [urlInput, cookiesPath, config, outputPath, router, t]);
+  }, [urlInput, cookiesPath, config, outputPath, router, t, appendYear, folderStyle, fileNameOrder]);
 
   const handleCookieSelect = useCallback(async () => {
     try {
@@ -145,6 +154,7 @@ export default function HomePage() {
 
   const urlLines = urlInput.split('\n').filter((u) => u.trim());
   const hasPlaylist = urlLines.some((u) => u.includes('playlist'));
+  const hasAlbum = urlLines.some((u) => u.includes('album'));
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -171,6 +181,23 @@ export default function HomePage() {
           </p>
         </div>
       </div>
+
+      {hasAlbum && (
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-6">
+          <label className="flex items-center justify-between cursor-pointer">
+            <div>
+              <span className="text-sm text-zinc-300">{t('append_year_label')}</span>
+              <p className="text-xs text-zinc-500 mt-0.5">{t('append_year_desc')}</p>
+            </div>
+            <button
+              className={`w-10 h-6 rounded-full transition-colors relative ${appendYear ? 'bg-blue-500' : 'bg-zinc-700'}`}
+              onClick={() => setAppendYear(!appendYear)}
+            >
+              <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform ${appendYear ? 'translate-x-5' : 'translate-x-1'}`} />
+            </button>
+          </label>
+        </div>
+      )}
 
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-6">
         <label className="flex items-center gap-2 text-sm font-medium text-zinc-300 mb-3">
@@ -201,6 +228,22 @@ export default function HomePage() {
         </label>
         <input type="text" className="w-full" placeholder="./Apple Music" value={outputPath} onChange={(e) => setOutputPath(e.target.value)} />
         <p className="text-xs text-zinc-500 mt-2">{t('output_hint')}</p>
+      </div>
+
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-6">
+        <label className="text-sm font-medium text-zinc-300 block mb-3">{t('folder_structure')}</label>
+        <select className="w-full" value={folderStyle} onChange={(e) => setFolderStyle(e.target.value)}>
+          <option value="artist_album">{t('artist_first')}</option>
+          <option value="album_artist">{t('album_first')}</option>
+          <option value="none">{t('single_track')}</option>
+        </select>
+        {folderStyle === 'none' && (
+          <div className="mt-3">
+            <label className="text-xs text-zinc-400 block mb-2">{t('file_name_order')}</label>
+            <DragOrder value={fileNameOrder} onChange={setFileNameOrder} />
+            <p className="text-xs text-zinc-500 mt-1">{t('drag_hint')}</p>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center gap-4">

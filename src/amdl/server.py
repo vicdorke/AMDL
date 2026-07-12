@@ -97,6 +97,9 @@ class TaskCreateRequest(BaseModel):
     no_synced_lyrics: bool = Field(default=False)
     read_urls_as_txt: bool = Field(default=False)
     exclude_tags: str | None = Field(default=None)
+    append_year: bool = Field(default=False, description="是否在专辑名后添加年份")
+    folder_style: str | None = Field(default=None, description="文件夹结构（覆盖配置）")
+    file_name_order: list | None = Field(default=None, description="文件名排列（覆盖配置）")
     template_folder_album: str = Field(default="{album_artist}/{album}")
     template_folder_compilation: str = Field(default="Compilations/{album}")
     template_file_single_disc: str = Field(default="{track:02d} {title}")
@@ -133,6 +136,7 @@ class DirectDownloadRequest(BaseModel):
     no_synced_lyrics: bool = Field(default=False)
     read_urls_as_txt: bool = Field(default=False)
     exclude_tags: str | None = Field(default=None)
+    append_year: bool = Field(default=False, description="是否在专辑名后添加年份")
     template_folder_album: str = Field(default="{album_artist}/{album}")
     template_folder_compilation: str = Field(default="Compilations/{album}")
     template_file_single_disc: str = Field(default="{track:02d} {title}")
@@ -247,7 +251,7 @@ async def create_task(req: TaskCreateRequest):
     """创建下载任务并加入队列，自动检测歌单并调整文件夹结构"""
     kwargs = req.model_dump()
     config = load_config()
-    folder_style = config.get("folder_style", "artist_album")
+    folder_style = req.folder_style or config.get("folder_style", "artist_album")
 
     # 自动检测歌单链接
     is_playlist = any("playlist" in u for u in req.urls)
@@ -260,7 +264,7 @@ async def create_task(req: TaskCreateRequest):
         # 应用用户选择的文件夹结构
         if folder_style == "none":
             # 读取用户自定义的文件名排列顺序并转为模板
-            order = config.get("file_name_order", ["track", "title", "artist"])
+            order = req.file_name_order or config.get("file_name_order", ["track", "title", "artist"])
             part_map = {"track": "{track:02d}", "title": "{title}", "artist": "{artist}", "album": "{album}", "sep": " - "}
             name_template = " ".join(part_map.get(p, "") for p in order).replace("  ", " ").replace(" -  - ", " - ").strip()
             kwargs["template_folder_album"] = ""
@@ -273,6 +277,20 @@ async def create_task(req: TaskCreateRequest):
             kwargs["template_file_single_disc"] = "{track:02d} {title}"
             kwargs["template_folder_compilation"] = "{album}/{album_artist}"
         # artist_album is the gamdl default, no override needed
+
+    # 专辑名后添加年份
+    if req.append_year:
+        kwargs["template_date"] = "%Y"  # 只显示年份
+        for key in ["template_folder_album", "template_folder_compilation"]:
+            val = kwargs.get(key)
+            if val and "{album}" in val:
+                kwargs[key] = val.replace("{album}", "{album} ({date})")
+            elif val and val == "{playlist_title}":
+                pass  # 歌单文件夹不加年份
+        if "template_folder_no_album" in kwargs:
+            val = kwargs["template_folder_no_album"]
+            if val and val != "" and val != "." and "{album}" not in (val or ""):
+                kwargs["template_folder_no_album"] = "{album} ({date})"
 
     task = task_manager.create_task(**kwargs)
     task_manager.enqueue_task(task.id)
