@@ -276,6 +276,17 @@ async def _download_urls_async(
         exclude_tags_list = [t.strip().lower() for t in exclude_tags.split(",") if t.strip()]
 
     # ── initialise gamdl API ─────────────────────────────
+    # 强制 UTF-8 读取 cookies 避免 GBK 解码错误
+    try:
+        _tmp = open(str(cookies_path), "r", encoding="utf-8", errors="replace").read()
+    except Exception:
+        _tmp = None
+    if _tmp is not None:
+        import tempfile
+        _tp = Path(tempfile.gettempdir()) / f"amdl_dl_{__import__('os').getpid()}.txt"
+        _tp.write_text(_tmp, encoding="utf-8")
+        cookies_path = str(_tp)
+
     try:
         apple_music_api = await AppleMusicApi.create_from_netscape_cookies(
             cookies_path=str(cookies_path),

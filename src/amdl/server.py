@@ -501,6 +501,24 @@ class CookiesCheckRequest(BaseModel):
     language: str = Field(default="zh-Hans", description="API 语言")
 
 
+def _fix_cookies_encoding(path: Path) -> Path:
+    """读取 cookies 文件并以 UTF-8 写入临时副本，避免 GBK 解码错误"""
+    import tempfile, shutil
+    try:
+        content = path.read_bytes()
+        content.decode("utf-8")
+        return path  # already valid UTF-8
+    except UnicodeDecodeError:
+        pass
+
+    # Read as UTF-8 with errors replaced, write clean copy
+    with open(path, "r", encoding="utf-8", errors="replace") as f:
+        content = f.read()
+    tmp = Path(tempfile.gettempdir()) / f"amdl_cookies_{__import__('os').getpid()}.txt"
+    tmp.write_text(content, encoding="utf-8")
+    return tmp
+
+
 @app.post("/api/cookies/check", tags=["cookies"])
 async def check_cookies(req: CookiesCheckRequest):
     """验证 cookies 文件是否有效"""
@@ -513,9 +531,12 @@ async def check_cookies(req: CookiesCheckRequest):
     if not path.is_file():
         return {"valid": False, "error": "路径不是文件", "subscription": False}
 
+    # 强制 UTF-8 读取 cookies（gamdl 默认用系统编码 GBK 会崩）
+    cookies_path_fixed = _fix_cookies_encoding(path)
+
     try:
         api = await AppleMusicApi.create_from_netscape_cookies(
-            cookies_path=str(path),
+            cookies_path=str(cookies_path_fixed),
             language=req.language,
         )
     except Exception as e:
