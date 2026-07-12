@@ -143,6 +143,8 @@ const translations: Record<Lang, Record<string, TranslationValue>> = {
     file_name_order: '文件名排列（拖动方块排序）',
     drag_hint: '拖动调整顺序，实时预览文件名格式',
     ask_each: '每次询问',
+    append_year_label: '在专辑名后添加年份',
+    append_year_desc: '如「专辑名 (2021)」',
   },
   en: {
     app_name: 'AMDL',
@@ -280,6 +282,8 @@ const translations: Record<Lang, Record<string, TranslationValue>> = {
     file_name_order: 'File Name Order (drag to reorder)',
     drag_hint: 'Drag blocks to reorder filename format',
     ask_each: 'Ask Each Time',
+    append_year_label: 'Append release year to album name',
+    append_year_desc: 'e.g. "Album Name (2021)"',
   },
 };
 
