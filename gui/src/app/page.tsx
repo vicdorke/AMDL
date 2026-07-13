@@ -26,6 +26,7 @@ export default function HomePage() {
   const [artistMediaType, setArtistMediaType] = useState('all-albums');
   const [folderStyle, setFolderStyle] = useState('artist_album');
   const [fileNameOrder, setFileNameOrder] = useState(defaultOrder);
+  const [wvdPath, setWvdPath] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -83,6 +84,7 @@ export default function HomePage() {
         artist_media_type: artistMediaType,
         folder_style: folderStyle,
         file_name_order: folderStyle === 'none' ? fileNameOrder : undefined,
+        wvd_path: wvdPath || null,
       });
       setStatus('success');
       setStatusMsg(t('task_created', res.task_id));
@@ -92,7 +94,7 @@ export default function HomePage() {
     } finally {
       setDownloading(false);
     }
-  }, [urlInput, cookiesPath, config, outputPath, router, t, appendYear, yearBeforeAlbum, artistMediaType, folderStyle, fileNameOrder]);
+  }, [urlInput, cookiesPath, config, outputPath, router, t, appendYear, yearBeforeAlbum, artistMediaType, folderStyle, fileNameOrder, wvdPath]);
 
   const handleCookieSelect = useCallback(async () => {
     try {
@@ -212,6 +214,15 @@ export default function HomePage() {
           <p className="flex items-center gap-1 text-xs text-red-400 mt-2"><XCircle className="w-3.5 h-3.5" />{cookiesMsg}</p>
         )}
         <p className="text-xs text-zinc-500 mt-2">{t('cookies_hint')}</p>
+      </div>
+
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-6">
+        <label className="flex items-center gap-2 text-sm font-medium text-zinc-300 mb-3">
+          <ShieldCheck className="w-4 h-4" />{t('wvd_path_label')}
+        </label>
+        <input type="text" className="w-full" placeholder={t('wvd_path_placeholder')} value={wvdPath}
+          onChange={(e) => setWvdPath(e.target.value)} />
+        <p className="text-xs text-zinc-500 mt-2">{t('wvd_path_hint')}</p>
       </div>
 
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-6">

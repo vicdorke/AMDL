@@ -59,6 +59,7 @@
 - **区域限制**：确保要下载的歌曲在你的 Apple Music 账户所属区域可用。例如美国区账户无法下载仅在中国区上架的歌曲。如果遇到「Resource Not Found (404)」错误，请检查歌曲是否在你的账户区域可播放。
 - **启动方式**：请使用 `启动.bat` 启动，直接双击 `AMDL.exe` 可能在中文 Windows 上出现编码问题。
 - **Cookies 有效期**：cookies 过期后需要重新导出。
+- **ALAC 无损下载**：需要 Widevine CDM 密钥文件（.wvd）。AAC 256kbps 无需此文件。获取方式参考 [KeyDive](https://github.com/hyugogirubato/KeyDive)，将生成的 `device.wvd` 放在 AMDL.exe 同级目录即可自动检测。未提供 WVD 文件时 ALAC 下载会失败。
 
 ---
 

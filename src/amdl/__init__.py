@@ -1,4 +1,4 @@
-__version__ = "1.0.6"
+__version__ = "1.0.7"
 
 # Monkey-patch MozillaCookieJar — 强制 UTF-8 读 cookies，修复中文 Windows GBK 崩溃
 import http.cookiejar as _cookiejar

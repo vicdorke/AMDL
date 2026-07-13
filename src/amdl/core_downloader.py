@@ -291,12 +291,25 @@ async def _download_urls_async(
         logger.critical("No active Apple Music subscription found — cannot download")
         return 1
 
+    # ── auto-detect WVD 文件 ───────────────────────────────
+    resolved_wvd = str(wvd_path) if wvd_path else None
+    if not resolved_wvd:
+        import sys
+        for candidate in [
+            Path(sys.executable).parent / "device.wvd" if getattr(sys, "frozen", False) else None,
+            Path.cwd() / "device.wvd",
+        ]:
+            if candidate and candidate.exists():
+                resolved_wvd = str(candidate)
+                logger.info(f"Auto-detected WVD: {resolved_wvd}")
+                break
+
     # ── build gamdl interface stack ──────────────────────
     base_interface = await AppleMusicBaseInterface.create(
         apple_music_api=apple_music_api,
         cover_format=cover_format,
         cover_size=cover_size,
-        wvd_path=str(wvd_path) if wvd_path else None,
+        wvd_path=resolved_wvd,
     )
 
     # 艺术家下载范围（默认全部专辑）
