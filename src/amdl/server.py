@@ -197,8 +197,20 @@ async def get_version():
 
 @app.get("/api/info", tags=["system"])
 async def get_api_info():
+    # 检测 WVD 文件是否可用
+    wvd_available = False
+    import sys as _sys
+    for candidate in [
+        Path(_sys.executable).parent / "device.wvd" if getattr(_sys, "frozen", False) else None,
+        Path.cwd() / "device.wvd",
+    ]:
+        if candidate and candidate.exists():
+            wvd_available = True
+            break
+
     return {
         "api_version": __version__,
+        "wvd_available": wvd_available,
         "supported_codecs_song": [{"value": c.value, "label": c.name} for c in SongCodec],
         "supported_codecs_music_video": [{"value": c.value, "label": c.name} for c in MusicVideoCodec],
         "supported_cover_formats": [{"value": c.value, "label": c.name} for c in CoverFormat],
@@ -256,6 +268,12 @@ async def create_task(req: TaskCreateRequest):
     config = load_config()
     folder_style = req.folder_style or config.get("folder_style", "artist_album")
 
+    # 自动检测专辑链接：直接用专辑名建文件夹，不再套歌手目录
+    is_album = any("album" in u for u in req.urls) and not any("playlist" in u for u in req.urls)
+    if is_album:
+        kwargs["template_folder_album"] = "{album}"
+        kwargs["template_folder_compilation"] = "{album}"
+
     # 自动检测歌单链接
     is_playlist = any("playlist" in u for u in req.urls)
     if is_playlist:
@@ -281,18 +299,19 @@ async def create_task(req: TaskCreateRequest):
             kwargs["template_folder_compilation"] = "{album}/{album_artist}"
         # artist_album is the gamdl default, no override needed
 
-    # 专辑名添加年份
+    # 专辑名添加年份（gamdl 用 {date} 按 template_date 格式化）
     if req.append_year:
+        kwargs["template_date"] = "%Y"  # 只输出年份
         if req.year_before_album:
-            replacement = "({year}) {album}"
+            replacement = "({date}) {album}"
         else:
-            replacement = "{album} ({year})"
+            replacement = "{album} ({date})"
         for key in ["template_folder_album", "template_folder_compilation"]:
             val = kwargs.get(key)
             if val and "{album}" in val:
                 kwargs[key] = val.replace("{album}", replacement)
             elif val and val == "{playlist_title}":
-                pass  # 歌单文件夹不加年份
+                pass
         if "template_folder_no_album" in kwargs:
             val = kwargs["template_folder_no_album"]
             if val and val != "" and val != "." and "{album}" not in (val or ""):

@@ -16,7 +16,7 @@
 
 ## 功能
 
-- **歌曲 / 专辑 / 歌单 / MV 下载** — 支持 AAC 256kbps、ALAC 无损、Dolby Atmos 等多种编码
+- **歌曲 / 专辑 / 歌单 / MV 下载** — 支持 AAC 256kbps、Dolby Atmos 等多种编码
 - **歌单自动识别** — 检测到歌单链接后自动以歌单名建文件夹，文件名仅保留歌曲名
 - **实时进度条** — WebSocket 实时推送下载进度，每完成一首立即更新
 - **Cookies 检测** — 一键验证 cookies 文件是否有效、Apple Music 订阅是否激活
@@ -26,6 +26,10 @@
 - **下载历史** — 自动记录所有下载任务，支持清空
 - **配置持久化** — 所有设置自动保存，重启不丢失
 - **深色主题** — 全局暗色 UI，护眼
+
+### 关于音质
+
+本工具默认支持 AAC 256kbps（高品质有损）。ALAC 无损及 Dolby Atmos 需要额外提供 Widevine CDM 解密密钥（.wvd 文件），该文件需用户自行获取。本工具不内置、不提供、不传播任何 DRM 密钥或破解工具。请遵守当地法律法规。
 
 ---
 
@@ -59,7 +63,7 @@
 - **区域限制**：确保要下载的歌曲在你的 Apple Music 账户所属区域可用。例如美国区账户无法下载仅在中国区上架的歌曲。如果遇到「Resource Not Found (404)」错误，请检查歌曲是否在你的账户区域可播放。
 - **启动方式**：请使用 `启动.bat` 启动，直接双击 `AMDL.exe` 可能在中文 Windows 上出现编码问题。
 - **Cookies 有效期**：cookies 过期后需要重新导出。
-- **ALAC 无损下载**：需要 Widevine CDM 密钥文件（.wvd）。AAC 256kbps 无需此文件。获取方式参考 [KeyDive](https://github.com/hyugogirubato/KeyDive)，将生成的 `device.wvd` 放在 AMDL.exe 同级目录即可自动检测。未提供 WVD 文件时 ALAC 下载会失败。
+- **ALAC 无损 / Dolby Atmos**：两个编码需要有效的 Widevine CDM 密钥文件（.wvd）。内置默认密钥仅支持 AAC 编码。获取方式参考 [KeyDive](https://github.com/hyugogirubato/KeyDive) 从 Android 设备提取，将 `device.wvd` 放在 AMDL.exe 同级目录或手动指定路径。未提供有效密钥时，这两个选项在设置中不可选。
 
 ---
 

@@ -45,6 +45,11 @@ cookies.txt
 ffmpeg.exe
 ffmpeg.zip
 
+# WVD extractor output
+wvd-extractor/output/
+wvd-extractor/*.wvd
+device.wvd
+
 # Old CI / docs
 .github/
 TODO.md

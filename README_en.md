@@ -16,7 +16,7 @@ Inspired by [wenfeng110402/AppleMusic-Downloader](https://github.com/wenfeng1104
 
 ## Features
 
-- **Songs / Albums / Playlists / Music Videos** — AAC 256kbps, ALAC lossless, Dolby Atmos, and more
+- **Songs / Albums / Playlists / Music Videos** — AAC 256kbps, Dolby Atmos, and more
 - **Playlist Auto-Detection** — Automatically creates a folder named after the playlist, with song names only
 - **Real-time Progress** — WebSocket-powered progress bar with per-track updates
 - **Cookies Check** — One-click validation of cookies file and subscription status
@@ -26,6 +26,10 @@ Inspired by [wenfeng110402/AppleMusic-Downloader](https://github.com/wenfeng1104
 - **Download History** — Auto-recorded with clear option
 - **Persistent Config** — All settings saved and restored across restarts
 - **Dark Theme** — Global dark UI
+
+### About Audio Quality
+
+This tool defaults to AAC 256kbps (high-quality lossy). ALAC lossless and Dolby Atmos require an additional Widevine CDM decryption key (.wvd file) which must be obtained by the user. This tool does NOT include, provide, or distribute any DRM keys or cracking tools. Please comply with local laws and regulations.
 
 ---
 
@@ -59,7 +63,7 @@ Get the latest version from [Releases](https://github.com/DerekH-233/AMDL/releas
 - **Region Restrictions**: Ensure the song is available in your Apple Music account's region. For example, a US account cannot download songs exclusive to the China store. If you see "Resource Not Found (404)", check whether the track is playable in your account region.
 - **Launcher**: Always use `启动.bat` to launch. Running `AMDL.exe` directly may cause encoding issues on non-English Windows.
 - **Cookies Expiry**: Re-export your cookies file if it expires.
-- **ALAC Lossless**: Requires a Widevine CDM key file (.wvd). AAC 256kbps works without it. See [KeyDive](https://github.com/hyugogirubato/KeyDive) for extraction instructions — place the generated `device.wvd` next to AMDL.exe for auto-detection. ALAC downloads will fail without a valid WVD file.
+- **ALAC Lossless / Dolby Atmos**: Both require a valid Widevine CDM key file (.wvd). The built-in default key only supports AAC. See [KeyDive](https://github.com/hyugogirubato/KeyDive) for extraction instructions — place `device.wvd` next to AMDL.exe or specify the path manually. Without a valid key, these options are disabled in settings.
 
 ---
 

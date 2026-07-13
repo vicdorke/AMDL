@@ -50,6 +50,7 @@ export interface Config {
 
 export interface ApiInfo {
   api_version: string;
+  wvd_available?: boolean;
   supported_codecs_song: { value: string; label: string }[];
   supported_codecs_music_video: { value: string; label: string }[];
   supported_cover_formats: { value: string; label: string }[];

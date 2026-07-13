@@ -158,6 +158,7 @@ const translations: Record<Lang, Record<string, TranslationValue>> = {
     wvd_path_label: 'WVD 密钥文件（可选）',
     wvd_path_placeholder: 'device.wvd 路径，留空则自动检测安装目录...',
     wvd_path_hint: 'ALAC 无损下载需要 Widevine CDM 密钥文件。将 .wvd 文件放在 AMDL.exe 同级目录下即可自动检测。获取方式请自行搜索 KeyDive。',
+    alac_requires_wvd: 'ALAC / Dolby Atmos 需要有效的 Widevine CDM 密钥（device.wvd）。将 .wvd 放在 AMDL 目录下自动解锁。',
   },
   en: {
     app_name: 'AMDL',
@@ -310,6 +311,7 @@ const translations: Record<Lang, Record<string, TranslationValue>> = {
     wvd_path_label: 'WVD Key File (optional)',
     wvd_path_placeholder: 'device.wvd path, leave blank to auto-detect...',
     wvd_path_hint: 'ALAC lossless download requires a Widevine CDM key file. Place a .wvd file next to AMDL.exe for auto-detection. Search "KeyDive" for extraction instructions.',
+    alac_requires_wvd: 'ALAC / Dolby Atmos require a valid Widevine CDM key (device.wvd). Place a .wvd file in the AMDL directory to unlock.',
   },
 };
 

@@ -57,14 +57,17 @@ export default function SettingsPage() {
     finally { setCleaning(false); }
   };
 
+  const wvdOk = apiInfo?.wvd_available || false;
+  // 精简选项：隐藏极小众编码，只保留常用
+  const mainCodecs = ['aac-web', 'aac-he-web', 'alac', 'atmos', 'ask'];
   const codecLabels: Record<string, string> = {
     'aac-web': 'AAC 256kbps ' + t('recommended'),
-    'aac-he-web': 'AAC-HE Web', 'alac': 'ALAC ' + t('lossless'),
-    'atmos': 'Dolby Atmos', 'aac': 'AAC', 'aac-he': 'AAC-HE',
-    'aac-binaural': 'AAC Binaural', 'aac-downmix': 'AAC Downmix',
-    'aac-he-binaural': 'AAC-HE Binaural', 'aac-he-downmix': 'AAC-HE Downmix',
-    'ac3': 'AC3', 'ask': t('ask_each'),
+    'aac-he-web': 'AAC-HE Web',
+    'alac': 'ALAC ' + t('lossless') + (wvdOk ? '' : ' (WVD)'),
+    'atmos': 'Dolby Atmos' + (wvdOk ? '' : ' (WVD)'),
+    'ask': t('ask_each'),
   };
+  const wvdCodecs = ['alac', 'atmos'];
 
   if (!config) return <div className="max-w-2xl mx-auto text-center py-20 text-zinc-500">{t('loading')}</div>;
 
@@ -101,8 +104,21 @@ export default function SettingsPage() {
             <input type="text" className="w-full" value={config.temp_path} onChange={(e) => updateField('temp_path', e.target.value)} /></div>
           <div><label className="text-xs text-zinc-400 block mb-1">{t('audio_codec')}</label>
             <select className="w-full" value={config.codec_song} onChange={(e) => updateField('codec_song', e.target.value)}>
-              {apiInfo?.supported_codecs_song.map((c) => <option key={c.value} value={c.value}>{codecLabels[c.value] || c.label}</option>)}
-            </select></div>
+              {apiInfo?.supported_codecs_song
+                .filter((c) => mainCodecs.includes(c.value))
+                .map((c) => {
+                  const lock = !wvdOk && wvdCodecs.includes(c.value);
+                  return (
+                    <option key={c.value} value={c.value} disabled={lock}>
+                      {codecLabels[c.value] || c.label}
+                    </option>
+                  );
+                })}
+            </select>
+            {!wvdOk && (
+              <p className="text-xs text-zinc-500 mt-1">{t('alac_requires_wvd')}</p>
+            )}
+          </div>
           <div><label className="text-xs text-zinc-400 block mb-1">{t('video_codec')}</label>
             <select className="w-full" value={config.codec_music_video} onChange={(e) => updateField('codec_music_video', e.target.value)}>
               {apiInfo?.supported_codecs_music_video.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}

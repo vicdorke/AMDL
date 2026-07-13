@@ -235,11 +235,20 @@ export default function HomePage() {
 
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-6">
         <label className="text-sm font-medium text-zinc-300 block mb-3">{t('folder_structure')}</label>
-        <select className="w-full mb-3" value={folderStyle} onChange={(e) => setFolderStyle(e.target.value)}>
-          <option value="artist_album">{t('artist_first')}</option>
-          <option value="album_artist">{t('album_first')}</option>
-          <option value="none">{t('single_track')}</option>
-        </select>
+        {hasAlbum ? (
+          <>
+            <select className="w-full mb-3" disabled>
+              <option>专辑名（自动以专辑名建文件夹）</option>
+            </select>
+            <p className="text-xs text-zinc-500 -mt-2 mb-3">下载专辑时自动使用专辑名作为文件夹</p>
+          </>
+        ) : (
+          <select className="w-full mb-3" value={folderStyle} onChange={(e) => setFolderStyle(e.target.value)}>
+            <option value="artist_album">{t('artist_first')}</option>
+            <option value="album_artist">{t('album_first')}</option>
+            <option value="none">{t('single_track')}</option>
+          </select>
+        )}
         {folderStyle === 'none' && (
           <div>
             <label className="text-xs text-zinc-400 block mb-2">{t('file_name_order')}</label>
