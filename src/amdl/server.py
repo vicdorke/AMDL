@@ -268,35 +268,32 @@ async def create_task(req: TaskCreateRequest):
     config = load_config()
     folder_style = req.folder_style or config.get("folder_style", "artist_album")
 
-    # 自动检测专辑链接：直接用专辑名建文件夹，不再套歌手目录
+    # 自动检测专辑链接：只用专辑名建文件夹（不受用户文件夹风格影响）
     is_album = any("album" in u for u in req.urls) and not any("playlist" in u for u in req.urls)
-    if is_album:
-        kwargs["template_folder_album"] = "{album}"
-        kwargs["template_folder_compilation"] = "{album}"
-
-    # 自动检测歌单链接
     is_playlist = any("playlist" in u for u in req.urls)
+
     if is_playlist:
         kwargs["template_folder_album"] = "{playlist_title}"
         kwargs["template_file_single_disc"] = "{title}"
         kwargs["template_folder_compilation"] = "{playlist_title}"
         kwargs["template_file_no_album"] = "{artist} - {title}"
-    else:
-        # 应用用户选择的文件夹结构
-        if folder_style == "none":
-            # 读取用户自定义的文件名排列顺序并转为模板
-            order = req.file_name_order or config.get("file_name_order", ["track", "title", "artist"])
-            part_map = {"track": "{track:02d}", "title": "{title}", "artist": "{artist}", "album": "{album}", "sep": " - "}
-            name_template = " ".join(part_map.get(p, "") for p in order).replace("  ", " ").replace(" -  - ", " - ").strip()
-            kwargs["template_folder_album"] = ""
-            kwargs["template_file_single_disc"] = name_template
-            kwargs["template_folder_compilation"] = ""
-            kwargs["template_folder_no_album"] = ""
-            kwargs["template_file_no_album"] = name_template
-        elif folder_style == "album_artist":
-            kwargs["template_folder_album"] = "{album}/{album_artist}"
-            kwargs["template_file_single_disc"] = "{track:02d} {title}"
-            kwargs["template_folder_compilation"] = "{album}/{album_artist}"
+    elif is_album:
+        kwargs["template_folder_album"] = "{album}"
+        kwargs["template_folder_compilation"] = "{album}"
+    elif folder_style == "none":
+        # 读取用户自定义的文件名排列顺序并转为模板
+        order = req.file_name_order or config.get("file_name_order", ["track", "title", "artist"])
+        part_map = {"track": "{track:02d}", "title": "{title}", "artist": "{artist}", "album": "{album}", "sep": " - "}
+        name_template = " ".join(part_map.get(p, "") for p in order).replace("  ", " ").replace(" -  - ", " - ").strip()
+        kwargs["template_folder_album"] = ""
+        kwargs["template_file_single_disc"] = name_template
+        kwargs["template_folder_compilation"] = ""
+        kwargs["template_folder_no_album"] = ""
+        kwargs["template_file_no_album"] = name_template
+    elif folder_style == "album_artist":
+        kwargs["template_folder_album"] = "{album}/{album_artist}"
+        kwargs["template_file_single_disc"] = "{track:02d} {title}"
+        kwargs["template_folder_compilation"] = "{album}/{album_artist}"
         # artist_album is the gamdl default, no override needed
 
     # 专辑名添加年份（gamdl 用 {date} 按 template_date 格式化）
