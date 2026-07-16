@@ -1,4 +1,4 @@
-gamdl>=3.7
+gamdl==3.7.3
 click
 colorama
 pillow
