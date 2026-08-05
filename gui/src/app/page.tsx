@@ -1,20 +1,26 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { Download, Link, FileText, Loader2, CheckCircle2, XCircle, Music4, ShieldCheck, ShieldAlert, Folder, ListMusic } from 'lucide-react';
+import { Download, Link, FileText, Loader2, CheckCircle2, XCircle, Music4, ShieldCheck, Folder, ListMusic } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useI18n } from '@/lib/i18n';
 import DragOrder, { defaultOrder } from '@/components/DragOrder';
-import type { Config } from '@/types';
+import type { ApiInfo, Config } from '@/types';
+
+const CODEC_CHOICES = [
+  { value: 'aac-web', labelKey: 'recommended' as const, prefix: 'AAC 256kbps' },
+  { value: 'aac-he-web', labelKey: null, prefix: 'AAC-HE Web' },
+  { value: 'alac', labelKey: 'lossless' as const, prefix: 'ALAC' },
+  { value: 'atmos', labelKey: null, prefix: 'Dolby Atmos' },
+];
 
 export default function HomePage() {
-  const router = useRouter();
   const { t } = useI18n();
   const [urlInput, setUrlInput] = useState('');
   const [cookiesPath, setCookiesPath] = useState('');
   const [outputPath, setOutputPath] = useState('');
   const [config, setConfig] = useState<Config | null>(null);
+  const [apiInfo, setApiInfo] = useState<ApiInfo | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [statusMsg, setStatusMsg] = useState('');
@@ -27,6 +33,8 @@ export default function HomePage() {
   const [folderStyle, setFolderStyle] = useState('artist_album');
   const [fileNameOrder, setFileNameOrder] = useState(defaultOrder);
   const [wvdPath, setWvdPath] = useState('');
+  const [showCodecModal, setShowCodecModal] = useState(false);
+  const [pendingCodec, setPendingCodec] = useState('aac-web');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -38,6 +46,7 @@ export default function HomePage() {
       const saved = localStorage.getItem('amdl_cookies_path') || cfg.cookies_path;
       if (saved) setCookiesPath(saved);
     }).catch(() => {});
+    api.get<ApiInfo>('/api/info').then(setApiInfo).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -55,24 +64,72 @@ export default function HomePage() {
     }).catch(() => {});
   }, [cookiesPath, outputPath, folderStyle, fileNameOrder]);
 
-  const handleDownload = useCallback(async () => {
+  const startDownload = useCallback(async (codecOverride?: string) => {
     const urls = urlInput.split('\n').map((u) => u.trim()).filter((u) => u.length > 0);
     if (urls.length === 0) return;
+
+    const invalidUrls = urls.filter((u) => !u.includes('music.apple.com'));
+    if (invalidUrls.length > 0) {
+      setStatus('error');
+      setStatusMsg(t('invalid_url_format'));
+      return;
+    }
+
     if (!cookiesPath) {
       setStatus('error');
       setStatusMsg(t('please_select_cookies'));
       return;
     }
+
     setDownloading(true);
     setStatus('idle');
-    let latestConfig = config;
-    try { latestConfig = await api.get<Config>('/api/config'); } catch { /* use cached */ }
+    setStatusMsg(t('cookies_recheck'));
+
     try {
+      // 下载前二次验证 cookies
+      const check = await api.post<{
+        valid: boolean;
+        subscription: boolean;
+        error: string | null;
+        storefront_name?: string | null;
+        storefront_emoji?: string | null;
+      }>('/api/cookies/check', { cookies_path: cookiesPath });
+
+      if (!check.valid || !check.subscription) {
+        setCookiesValid('invalid');
+        setCookiesMsg(check.error || t('cookies_recheck_failed'));
+        setStatus('error');
+        setStatusMsg(check.error || t('cookies_recheck_failed'));
+        return;
+      }
+
+      setCookiesValid('valid');
+      const emoji = check.storefront_emoji ? ` ${check.storefront_emoji}` : '';
+      const region = check.storefront_name ? ` (${check.storefront_name}${emoji})` : '';
+      setCookiesMsg(t('cookies_valid_sub') + region);
+
+      let latestConfig = config;
+      try {
+        latestConfig = await api.get<Config>('/api/config');
+      } catch {
+        /* use cached */
+      }
+
+      const configuredCodec = (latestConfig?.codec_song || 'aac-web').toLowerCase();
+      if (!codecOverride && configuredCodec === 'ask') {
+        setPendingCodec('aac-web');
+        setShowCodecModal(true);
+        setStatus('idle');
+        setStatusMsg('');
+        return;
+      }
+
+      const codecSong = codecOverride || configuredCodec || 'aac-web';
       const res = await api.post<{ task_id: string }>('/api/tasks', {
         urls,
         cookies_path: cookiesPath,
         output_path: outputPath || latestConfig?.output_path || './Apple Music',
-        codec_song: latestConfig?.codec_song || 'aac-web',
+        codec_song: codecSong,
         save_cover: latestConfig?.save_cover ?? true,
         save_playlist: latestConfig?.save_playlist ?? true,
         overwrite: latestConfig?.overwrite ?? false,
@@ -86,6 +143,7 @@ export default function HomePage() {
         file_name_order: folderStyle === 'none' ? fileNameOrder : undefined,
         wvd_path: wvdPath || null,
       });
+      setShowCodecModal(false);
       setStatus('success');
       setStatusMsg(t('task_created', res.task_id));
     } catch (err) {
@@ -94,7 +152,15 @@ export default function HomePage() {
     } finally {
       setDownloading(false);
     }
-  }, [urlInput, cookiesPath, config, outputPath, router, t, appendYear, yearBeforeAlbum, artistMediaType, folderStyle, fileNameOrder, wvdPath]);
+  }, [urlInput, cookiesPath, config, outputPath, t, appendYear, yearBeforeAlbum, artistMediaType, folderStyle, fileNameOrder, wvdPath]);
+
+  const handleDownload = useCallback(() => {
+    void startDownload();
+  }, [startDownload]);
+
+  const handleConfirmCodec = useCallback(() => {
+    void startDownload(pendingCodec);
+  }, [startDownload, pendingCodec]);
 
   const handleCookieSelect = useCallback(async () => {
     try {
@@ -340,6 +406,68 @@ export default function HomePage() {
           ))}
         </div>
       </div>
+
+      {showCodecModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-xl border border-zinc-700 bg-zinc-900 p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-white mb-2">{t('select_codec_title')}</h3>
+            <p className="text-sm text-zinc-400 mb-4">{t('select_codec_desc')}</p>
+            <div className="space-y-2 mb-6">
+              {CODEC_CHOICES.map((c) => {
+                const needsWvd = c.value === 'alac' || c.value === 'atmos';
+                const locked = needsWvd && !(apiInfo?.wvd_available);
+                const label = c.labelKey
+                  ? `${c.prefix} ${t(c.labelKey)}${locked ? ' (WVD)' : ''}`
+                  : `${c.prefix}${locked ? ' (WVD)' : ''}`;
+                return (
+                  <label
+                    key={c.value}
+                    className={`flex items-center gap-3 rounded-lg border px-3 py-2 cursor-pointer ${
+                      pendingCodec === c.value
+                        ? 'border-blue-500 bg-blue-500/10'
+                        : 'border-zinc-700 hover:border-zinc-500'
+                    } ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <input
+                      type="radio"
+                      name="codec"
+                      value={c.value}
+                      disabled={locked}
+                      checked={pendingCodec === c.value}
+                      onChange={() => setPendingCodec(c.value)}
+                      className="accent-blue-500"
+                    />
+                    <span className="text-sm text-zinc-200">{label}</span>
+                  </label>
+                );
+              })}
+            </div>
+            {!apiInfo?.wvd_available && (
+              <p className="text-xs text-zinc-500 mb-4">{t('alac_requires_wvd')}</p>
+            )}
+            <div className="flex justify-end gap-3">
+              <button
+                className="btn-ghost"
+                onClick={() => {
+                  setShowCodecModal(false);
+                  setDownloading(false);
+                }}
+                disabled={downloading}
+              >
+                {t('cancel')}
+              </button>
+              <button
+                className="btn-primary flex items-center gap-2"
+                onClick={handleConfirmCodec}
+                disabled={downloading}
+              >
+                {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                {t('confirm_codec')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -34,6 +34,7 @@ from amdl.task_manager import (
     task_manager,
     unregister_ws,
 )
+from amdl.utils import classify_download_error, normalize_path
 from amdl import db
 
 
@@ -264,7 +265,48 @@ async def websocket_endpoint(ws: WebSocket, task_id: str):
 @app.post("/api/tasks", tags=["tasks"])
 async def create_task(req: TaskCreateRequest):
     """创建下载任务并加入队列，自动检测歌单并调整文件夹结构"""
+    # 验证 URL 格式
+    for url in req.urls:
+        if "music.apple.com" not in url:
+            raise HTTPException(status_code=400, detail=f"Invalid URL: {url}. Only Apple Music links are supported.")
+
+    # 路径规范化（空格/引号/波浪号）
+    cookies_path = normalize_path(req.cookies_path)
+    if not cookies_path:
+        raise HTTPException(status_code=400, detail="请先选择 cookies.txt 文件")
+    output_path = normalize_path(req.output_path) if req.output_path else None
+    temp_path = normalize_path(req.temp_path) if req.temp_path else None
+    wvd_path = normalize_path(req.wvd_path) if req.wvd_path else None
+
+    # 下载前二次验证 cookies（文件存在 + 可解析 + 有订阅）
+    cookies_file = Path(cookies_path)
+    if not cookies_file.exists() or not cookies_file.is_file():
+        raise HTTPException(status_code=400, detail=f"Cookies 文件不存在: {cookies_path}")
+    try:
+        from gamdl.api import AppleMusicApi
+        api = await AppleMusicApi.create_from_netscape_cookies(
+            cookies_path=cookies_path,
+            language=req.language or "zh-Hans",
+        )
+        if not api.active_subscription:
+            raise HTTPException(
+                status_code=400,
+                detail="Cookies 有效但未检测到 Apple Music 订阅，无法下载",
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Cookies 无效或已过期: {e}") from e
+
+    # codec=ask 不允许直接进入下载队列（GUI 应先弹窗选择具体编码）
+    if (req.codec_song or "").lower() == "ask":
+        raise HTTPException(status_code=400, detail="请先选择音频编码（当前为「每次询问」）")
+
     kwargs = req.model_dump()
+    kwargs["cookies_path"] = cookies_path
+    kwargs["output_path"] = output_path
+    kwargs["temp_path"] = temp_path
+    kwargs["wvd_path"] = wvd_path
     config = load_config()
     folder_style = req.folder_style or config.get("folder_style", "artist_album")
 
@@ -326,7 +368,7 @@ async def list_tasks(status: str | None = None):
 
 
 @app.get("/api/tasks/{task_id}", tags=["tasks"])
-async def get_task(task_id: str):
+async def get_task(task_id: str, include_logs: bool = False):
     """获取单个任务详情"""
     task = task_manager.get_task(task_id)
     if task is None:
@@ -334,8 +376,30 @@ async def get_task(task_id: str):
         db_task = db.get_task(task_id)
         if db_task is None:
             raise HTTPException(status_code=404, detail="任务不存在")
+        if not include_logs:
+            db_task = {**db_task, "logs": []}
         return db_task
-    return task.to_dict()
+    data = task.to_dict()
+    if include_logs:
+        data["logs"] = list(task.logs)
+    return data
+
+
+@app.get("/api/tasks/{task_id}/logs", tags=["tasks"])
+async def get_task_logs(task_id: str, limit: int = 500):
+    """获取任务完整日志（内存优先，否则回退数据库）"""
+    limit = max(1, min(limit, 2000))
+    task = task_manager.get_task(task_id)
+    if task is not None:
+        logs = list(task.logs[-limit:])
+        return {"task_id": task_id, "logs": logs, "count": len(logs), "last_error": task.last_error}
+    db_task = db.get_task(task_id)
+    if db_task is None:
+        raise HTTPException(status_code=404, detail="任务不存在")
+    logs = list(db_task.get("logs") or [])[-limit:]
+    raw = db_task.get("last_error") or ""
+    last_error = classify_download_error(raw, logs) if raw else ""
+    return {"task_id": task_id, "logs": logs, "count": len(logs), "last_error": last_error}
 
 
 @app.delete("/api/tasks/{task_id}", tags=["tasks"])
@@ -524,9 +588,13 @@ async def check_cookies(req: CookiesCheckRequest):
     """验证 cookies 文件是否有效"""
     from gamdl.api import AppleMusicApi
 
-    path = Path(req.cookies_path)
+    normalized = normalize_path(req.cookies_path)
+    if not normalized:
+        return {"valid": False, "error": "路径为空", "subscription": False}
+
+    path = Path(normalized)
     if not path.exists():
-        return {"valid": False, "error": "文件不存在", "subscription": False}
+        return {"valid": False, "error": f"文件不存在: {normalized}", "subscription": False}
 
     if not path.is_file():
         return {"valid": False, "error": "路径不是文件", "subscription": False}

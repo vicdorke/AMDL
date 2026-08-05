@@ -15,6 +15,7 @@ export interface TaskInfo {
   total: number;
   error_count: number;
   last_error?: string;
+  logs?: string[];
 }
 
 export interface Config {

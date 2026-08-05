@@ -10,6 +10,7 @@ from typing import Any, Callable
 
 from amdl import db
 from amdl.config_manager import load_config
+from amdl.utils import classify_download_error, normalize_path
 
 # ── 全局 WebSocket 连接注册表 ─────────────────────────────────
 # {task_id: set(websocket, ...)}
@@ -162,20 +163,22 @@ class TaskManager:
         task_id = kwargs.pop("id", uuid.uuid4().hex[:12])
 
         # 处理 output_path / temp_path：如果前端传了 None 或空，用配置默认值
-        output_path = kwargs.pop("output_path", None)
+        output_path = normalize_path(kwargs.pop("output_path", None))
         if not output_path:
-            output_path = config.get("output_path", "./Apple Music")
-        temp_path = kwargs.pop("temp_path", None)
+            output_path = normalize_path(config.get("output_path", "./Apple Music")) or "./Apple Music"
+        temp_path = normalize_path(kwargs.pop("temp_path", None))
         if not temp_path:
-            temp_path = config.get("temp_path", "./temp")
+            temp_path = normalize_path(config.get("temp_path", "./temp")) or "./temp"
+        cookies_path = normalize_path(kwargs.pop("cookies_path", "")) or ""
+        wvd_path = normalize_path(kwargs.pop("wvd_path", None))
 
         task = TaskInfo(
             id=task_id,
             urls=kwargs.pop("urls", []),
-            cookies_path=kwargs.pop("cookies_path", ""),
+            cookies_path=cookies_path,
             output_path=output_path,
             temp_path=temp_path,
-            wvd_path=kwargs.pop("wvd_path", None),
+            wvd_path=wvd_path,
             nm3u8dlre_path=kwargs.pop("nm3u8dlre_path", "N_m3u8DL-RE"),
             ffmpeg_path=kwargs.pop("ffmpeg_path", "ffmpeg"),
             download_mode=kwargs.pop("download_mode", config.get("download_mode", "ytdlp")),
@@ -227,6 +230,10 @@ class TaskManager:
             if tid in self._tasks:
                 result.append(self._tasks[tid].to_dict())
             else:
+                logs = d.get("logs") or []
+                last_error = ""
+                if d.get("status") in ("failed", "completed") and logs:
+                    last_error = classify_download_error(logs[-1], logs)
                 result.append({
                     "id": d["id"],
                     "urls": d["urls"],
@@ -236,6 +243,7 @@ class TaskManager:
                     "completed": d["completed"],
                     "total": d["total"],
                     "error_count": d["error_count"],
+                    "last_error": last_error,
                     "audio_format": d.get("audio_format"),
                     "video_format": d.get("video_format"),
                 })
@@ -387,31 +395,58 @@ class TaskManager:
                 # 部分成功：有文件下载成功，也有错误
                 task.status = "completed"
                 task.progress = 100
-                task.last_error = f"完成 {task.completed} 首，{error_count} 个错误（可能为编码兼容问题，文件已正常下载）"
+                task.error_count = error_count
+                task.last_error = (
+                    f"完成 {task.completed} 首，{error_count} 个错误"
+                    f"（{classify_download_error(task.logs[-1] if task.logs else '', task.logs)}）"
+                )
                 db.update_task_status(task.id, "completed")
                 db.update_task_progress(task.id, 100, task.completed, task.total, task.error_count)
-                await broadcast_to_task(task.id, {"type": "status", "status": "completed", "error_count": error_count, "error": task.last_error})
+                await broadcast_to_task(task.id, {
+                    "type": "status",
+                    "status": "completed",
+                    "error_count": error_count,
+                    "error": task.last_error,
+                    "last_error": task.last_error,
+                })
             else:
                 task.status = "failed"
                 task.error_count = error_count
-                task.last_error = task.logs[-1] if task.logs else f"下载完成但有 {error_count} 个错误"
+                raw = task.logs[-1] if task.logs else f"下载完成但有 {error_count} 个错误"
+                task.last_error = classify_download_error(raw, task.logs)
                 db.update_task_status(task.id, "failed")
-                await broadcast_to_task(task.id, {"type": "status", "status": "failed", "error_count": error_count, "error": task.last_error})
+                await broadcast_to_task(task.id, {
+                    "type": "status",
+                    "status": "failed",
+                    "error_count": error_count,
+                    "error": task.last_error,
+                    "last_error": task.last_error,
+                })
 
             await broadcast_to_task(task.id, {"type": "done"})
 
         except asyncio.CancelledError:
             task.status = "cancelled"
-            task.last_error = "任务被取消"
+            task.last_error = "任务已取消"
             db.update_task_status(task.id, "cancelled")
-            await broadcast_to_task(task.id, {"type": "status", "status": "cancelled", "error": task.last_error})
+            await broadcast_to_task(task.id, {
+                "type": "status",
+                "status": "cancelled",
+                "error": task.last_error,
+                "last_error": task.last_error,
+            })
         except Exception as e:
             task.status = "failed"
             task.error_count += 1
-            task.last_error = str(e)
+            task.last_error = classify_download_error(e, task.logs)
             db.update_task_status(task.id, "failed")
             log_callback(f"任务异常: {e}")
-            await broadcast_to_task(task.id, {"type": "status", "status": "failed", "error": task.last_error})
+            await broadcast_to_task(task.id, {
+                "type": "status",
+                "status": "failed",
+                "error": task.last_error,
+                "last_error": task.last_error,
+            })
 
 
 # 全局单例

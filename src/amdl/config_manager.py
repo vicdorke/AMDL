@@ -4,6 +4,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from amdl.utils import normalize_path
+
 CONFIG_DIR = Path.home() / ".amdl"
 CONFIG_PATH = CONFIG_DIR / "config.json"
 
@@ -96,6 +98,15 @@ def _validate_and_fix(config: dict) -> dict:
     if config.get("download_mode") not in valid_modes:
         config["download_mode"] = DEFAULT_CONFIG["download_mode"]
         changed = True
+
+    # 路径规范化
+    for key in ("output_path", "temp_path", "cookies_path"):
+        raw = config.get(key)
+        if raw:
+            fixed = normalize_path(raw)
+            if fixed and fixed != raw:
+                config[key] = fixed
+                changed = True
 
     if changed:
         save_config(config)
