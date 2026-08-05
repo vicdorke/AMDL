@@ -31,8 +31,9 @@ def build_frontend():
     gui_dir = ROOT / "gui"
     if not (gui_dir / "node_modules").exists():
         run_cmd(["npm", "install"], cwd=str(gui_dir))
-    next_bin = gui_dir / "node_modules" / ".bin" / "next"
-    run_cmd([str(next_bin), "build"], cwd=str(gui_dir))
+    # Windows 下 .bin/next 是 shell 脚本无法直接执行，需用 next.cmd
+    next_cmd = gui_dir / "node_modules" / ".bin" / ("next.cmd" if os.name == "nt" else "next")
+    run_cmd([str(next_cmd), "build"], cwd=str(gui_dir))
     print("  前端构建完成 -> gui/out/")
 
 
